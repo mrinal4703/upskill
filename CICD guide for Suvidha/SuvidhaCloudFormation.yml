@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for creating an Application Load Balancer and Auto Scaling Group
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 key pair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+
+Resources:
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP and SSH access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: SUVIDHA-launchtemp
+      LaunchTemplateData:
+        ImageId: ami-0f58b397bc5c1f2e8  # Update this with the appropriate Ubuntu AMI ID for your region
+        InstanceType: t2.micro
+        KeyName: !Ref KeyName
+        SecurityGroupIds: 
+          - !GetAtt InstanceSecurityGroup.GroupId  # Reference the security group ID directly
+        UserData: !Base64 |
+          #!/bin/bash
+          sudo apt update -y
+          sudo apt install -y openjdk-8-jdk openjdk-17-jre-headless openjdk-17-jdk-headless unzip
+          sudo apt install ruby-full -y
+          sudo apt install wget
+          curl -fsSL https://fnm.vercel.app/install | bash
+          source /home/ubuntu/.bashrc
+          fnm use --install-if-missing 20
+          cd /home/ubuntu
+          wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.89/bin/apache-tomcat-9.0.89.zip
+          wget https://aws-codedeploy-ap-south-1.s3.amazonaws.com/latest/install
+          chmod +x install
+          unzip /home/ubuntu/apache-tomcat-9.0.89.zip -d /home/ubuntu/
+          sudo chmod o+w /home/ubuntu/apache-tomcat-9.0.89/webapps/
+          sudo ./install auto 
+        IamInstanceProfile:
+          Arn: arn:aws:iam::992382648565:instance-profile/EC2RoleforCodeDeploySuvidhaProject
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: SUVIDHA-tgtgrp
+      TargetType: instance
+      Protocol: HTTP
+      Port: 8080
+      VpcId: vpc-04aeb044e6804fb13  
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: SUVIDHA-alb
+      Scheme: internet-facing
+      IpAddressType: ipv4
+      Subnets:
+        - subnet-07b2c403f132a8721
+        - subnet-0599bd637b4e932aa
+        - subnet-0542b1661b82f1104
+      SecurityGroups:
+        - sg-0eb230b6f50161d3b
+        - !GetAtt InstanceSecurityGroup.GroupId  # Reference the security group ID directly
+
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: SUVIDHA-asg
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
+      VPCZoneIdentifier:
+        - subnet-07b2c403f132a8721
+        - subnet-0599bd637b4e932aa
+        - subnet-0542b1661b82f1104
+      TargetGroupARNs:
+        - !Ref TargetGroup
+      HealthCheckType: EC2
+      HealthCheckGracePeriod: 300
+      DesiredCapacity: 2
+      MinSize: 1
+      MaxSize: 3
+
+Outputs:
+  LoadBalancerDNSName:
+    Description: DNS name of the load balancer
+    Value: !GetAtt LoadBalancer.DNSName

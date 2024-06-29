@@ -1,0 +1,55 @@
+#version: 0.2
+#
+#phases:
+#  install:
+#    runtime-versions:
+#      java: corretto17
+#    commands:
+#      - echo Installing Apache Tomcat...
+#      # - wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.71/bin/apache-tomcat-9.0.71.zip
+#      # - unzip apache-tomcat-9.0.71.zip
+#  build:
+#    commands:
+#      - echo Deploying WAR file to Apache Tomcat...
+#      - mvn clean install
+#      # - mvn -f pom.xml compile
+#      # - mvn -f pom.xml package
+#  post_build:
+#    commands:
+#      - echo Build Success
+#artifacts:
+#  files:
+#    - target/*.war
+#    - scripts/*.sh
+#    - appspec.yml
+#  discard-paths: yes
+#
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto17
+    commands:
+      - echo Installing Apache Tomcat...
+#      - wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.89/bin/apache-tomcat-9.0.89.zip
+#      - unzip apache-tomcat-9.0.89.zip
+#      - echo Installing Node.js and npm...
+#      - curl -fsSL https://fnm.vercel.app/install | bash
+#      - source /root/.bashrc
+#      - fnm use --install-if-missing 20
+#      - node -v
+#      - npm -v
+  build:
+    commands:
+      - echo Building WAR file...
+      - mvn clean install
+  post_build:
+    commands:
+      - echo Build Success
+artifacts:
+  files:
+    - target/*.war
+    - scripts/*.sh
+    - appspec.yml
+  discard-paths: yes

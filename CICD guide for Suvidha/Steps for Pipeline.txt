@@ -1,0 +1,46 @@
+Adding an Application Load Balancer (ALB) to your AWS environment for your project running on port 8080 with autoscaling involves several steps. Here's a step-by-step guide:
+
+1. Sign in to the AWS Management Console: Go to the AWS Management Console and sign in with your credentials.
+
+2. Navigate to the EC2 Dashboard: Once signed in, navigate to the EC2 Dashboard by selecting "Services" from the top-left corner, and then selecting "EC2" under the "Compute" section.
+
+3. Create a Target Group:
+   - In the EC2 Dashboard, under the "Load Balancing" section, select "Target Groups".
+   - Click on the "Create target group" button.
+   - Configure the target group:
+     - Give your target group a name.
+     - Select the target type as "Instance".
+     - For "Protocol", choose "HTTP" if your application communicates over HTTP. If it's HTTPS, choose "HTTPS" and configure SSL accordingly.
+     - For "Port", enter "8080" since your project is running on port 8080.
+     - Configure other settings as per your requirements.
+   - Click on "Create".
+
+4. Create an Application Load Balancer (ALB):
+   - In the EC2 Dashboard, under the "Load Balancing" section, select "Load Balancers".
+   - Click on the "Create Load Balancer" button.
+   - Choose "Application Load Balancer" as the load balancer type.
+   - Configure the load balancer:
+     - Give your load balancer a name.
+     - Configure listeners: Add a listener for HTTP on port 80, or HTTPS on port 443 if you're using SSL.
+     - Configure availability zones and subnets.
+     - Configure security settings as per your requirements.
+     - Select the previously created target group.
+     - Configure routing if needed.
+   - Click on "Next: Configure Security Settings" and proceed with the security settings.
+   - Review your configuration and click on "Create".
+
+5. Configure Auto Scaling Group:
+   - Go to the EC2 Dashboard, under the "Auto Scaling" section, select "Auto Scaling Groups".
+   - Select your auto scaling group.
+   - Click on the "Edit" button.
+   - In the "Load Balancing" section, select the ALB you created.
+   - Configure health checks and other settings as per your requirements.
+   - Click on "Save".
+
+6. Update Security Groups:
+   - Make sure your instances' security group allows traffic from the ALB on port 8080.
+   - If necessary, update the security group to allow inbound traffic from the ALB.
+
+7. Test: Once everything is configured, test your setup by accessing your application through the ALB's DNS name or IP address.
+
+That's it! Your application should now be accessible through the ALB, and traffic should be evenly distributed across the instances in your auto scaling group.
